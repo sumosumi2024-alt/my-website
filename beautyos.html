@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BeautyOS v3.1 Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold2:#a87d30;--gold3:#8B6914;
+  --dark:#0F0F0F;--cream:#FAF7F2;--border:#E8E0D5;
+  --ok:#16a34a;--warn:#d97706;--err:#dc2626;--ind:#4f46e5;
+  --font:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --sidebar-w:232px;
+}
+body{font-family:var(--font);background:#F2EFE9;min-height:100vh}
+button{cursor:pointer;font-family:var(--font)}
+input,select{font-family:var(--font)}
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px}
+
+/* ── LAYOUT ── */
+#app{display:flex;min-height:100vh}
+#sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,#0F0F0F,#1a1208);display:flex;flex-direction:column;transition:width .2s;flex-shrink:0;position:relative;z-index:100;border-right:1px solid rgba(201,168,76,0.12)}
+#sidebar.collapsed{width:62px}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 26px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+#content{flex:1;overflow:auto;padding:24px 28px}
+
+/* Sidebar parts */
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10}
+#sidebar.collapsed .sb-logo{padding:18px 11px}
+.sb-logo-icon{width:38px;height:38px;border-radius:12px;flex-shrink:0;background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px;box-shadow:0 2px 10px rgba(201,168,76,.55)}
+.sb-logo-text{color:var(--gold);font-weight:900;font-size:16px;letter-spacing:1.5px;font-family:Georgia,serif}
+.sb-logo-ver{color:#555;font-size:8px;letter-spacing:1px}
+.sb-spa{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px}
+.sb-spa-label{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.sb-spa-name{color:#ccc;font-weight:700}
+#sidebar nav{flex:1;padding:10px 7px;overflow-y:auto}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;border-radius:9px;border:none;background:transparent;color:#555;margin-bottom:2px;text-align:left;font-size:13px;font-weight:400;transition:all .12s;border-left:3px solid transparent;white-space:nowrap;overflow:hidden}
+.nav-btn.active{background:rgba(201,168,76,0.18);color:var(--gold);font-weight:700;border-left-color:var(--gold)}
+.nav-btn:hover:not(.active){background:rgba(255,255,255,0.04);color:#888}
+#sidebar.collapsed .nav-btn{padding:11px;justify-content:center}
+.sb-user{padding:10px 7px;border-top:1px solid rgba(255,255,255,0.05)}
+.sb-user-card{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:9px;background:rgba(255,255,255,0.04);margin-bottom:5px}
+#sidebar.collapsed .sb-user-card{padding:9px;justify-content:center}
+.sb-user-avatar{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.sb-user-name{color:#ddd;font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-user-role{color:#555;font-size:9px;text-transform:uppercase;letter-spacing:.5px}
+.sb-logout{display:flex;align-items:center;gap:7px;width:100%;padding:7px 12px;border-radius:9px;border:none;background:transparent;color:#555;font-size:12px}
+.sb-logout:hover{color:#888}
+#sidebar.collapsed .sb-logout{padding:8px;justify-content:center}
+.sb-toggle{position:absolute;top:22px;right:-11px;width:22px;height:22px;border-radius:50%;border:1px solid rgba(201,168,76,.55);background:#1a1208;color:var(--gold);font-size:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:0 1px 8px rgba(0,0,0,.06);padding:20px 24px}
+.kpi-card{display:flex;align-items:center;gap:14px;padding:16px 18px}
+.kpi-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.kpi-label{font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.kpi-value{font-size:21px;font-weight:900;color:var(--dark);margin-top:2px}
+.kpi-sub{font-size:11px;margin-top:3px;display:flex;gap:5px}
+
+/* ── BADGES ── */
+.bdg{border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block}
+
+/* ── BUTTONS ── */
+.btn{border-radius:8px;font-weight:700;font-size:13px;padding:9px 20px;border:none;transition:opacity .15s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;box-shadow:0 2px 8px rgba(201,168,76,.4)}
+.btn-ghost{background:transparent;color:var(--gold);border:1.5px solid rgba(201,168,76,.6)}
+.btn-secondary{background:#f5f2ed;color:#444;border:1px solid var(--border)}
+.btn-danger{background:var(--err);color:#fff}
+.btn-success{background:var(--ok);color:#fff}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-full{width:100%}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:linear-gradient(135deg,#faf7f0,#f5f0e8);border-bottom:2px solid rgba(201,168,76,.33)}
+th{padding:10px 14px;text-align:left;font-size:10px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:#faf8f4}
+td{padding:11px 14px}
+tbody tr.danger:hover{background:#fff5f5}
+
+/* ── FORM ── */
+.form-label{display:block;font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 13px;font-size:14px;background:var(--cream);outline:none;box-sizing:border-box;font-family:var(--font)}
+.form-input:focus{border-color:var(--gold)}
+.form-group{margin-bottom:14px}
+.form-hint{font-size:11px;color:#aaa;margin-top:4px}
+.form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:18px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-size:15px;font-weight:700;color:var(--dark)}
+.modal-close{border:none;background:none;font-size:22px;color:#aaa;line-height:1}
+.modal-body{padding:24px}
+
+/* ── GRID KPI ── */
+.grid-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+
+/* ── MISC ── */
+.page-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.page-title h2{font-size:21px;font-weight:900;color:var(--dark)}
+.page-sub{color:#888;font-size:13px;margin-bottom:16px}
+.empty-state{text-align:center;padding:48px;color:#bbb}
+.empty-state .empty-icon{font-size:38px;margin-bottom:10px}
+.empty-state p{font-size:13px}
+code.inv{font-size:11px;background:#f0ece4;padding:2px 8px;border-radius:5px;font-family:monospace}
+.overflow-x{overflow-x:auto}
+
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(160deg,#0a0a0a 0%,#1c1408 45%,#0a0a0a 100%);position:relative;overflow:hidden}
+.login-glow1{position:fixed;top:-10%;right:-10%;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.13) 0%,transparent 65%);pointer-events:none}
+.login-glow2{position:fixed;bottom:-8%;left:-8%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(79,70,229,.08) 0%,transparent 65%);pointer-events:none}
+.login-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;z-index:1}
+.login-panel{width:900px;max-width:100%;display:flex;border-radius:24px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.login-left{flex:1;background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px}
+.login-left-icon{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;font-weight:900;margin-bottom:20px;box-shadow:0 8px 40px rgba(201,168,76,.4)}
+.login-left h1{color:var(--gold);font-size:34px;font-weight:900;letter-spacing:3px;font-family:Georgia,serif;text-align:center;margin-bottom:8px}
+.login-left p{color:#555;font-size:13px;text-align:center;line-height:1.7;margin-bottom:36px}
+.login-feature{background:rgba(255,255,255,.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:12px;width:100%;max-width:280px;margin-bottom:8px}
+.login-feature-icon{font-size:20px;flex-shrink:0}
+.login-feature-title{color:var(--gold);font-size:11px;font-weight:700}
+.login-feature-sub{color:#444;font-size:10px;margin-top:1px}
+.login-right{width:400px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);padding:48px 40px;display:flex;flex-direction:column;justify-content:center}
+.login-right h2{color:#fff;font-size:22px;font-weight:800;margin-bottom:4px}
+.login-right > p{color:#555;font-size:12px;margin-bottom:28px}
+.login-field-label{display:block;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.login-input{width:100%;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;font-size:15px;color:#fff;outline:none;box-sizing:border-box;font-family:var(--font)}
+.login-input:focus{border-color:rgba(201,168,76,.5)}
+.login-input::placeholder{color:#444}
+.login-pw-wrap{position:relative}
+.login-pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#666;font-size:16px;padding:4px}
+.login-err{background:rgba(220,38,38,.18);border:1px solid rgba(220,38,38,.4);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:#fca5a5;display:flex;align-items:center;gap:8px}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;border:none;border-radius:12px;padding:15px;font-size:16px;font-weight:800;letter-spacing:.5px;font-family:var(--font);box-shadow:0 4px 24px rgba(201,168,76,.55);transition:all .2s}
+.login-btn:disabled{background:rgba(255,255,255,.1);color:#666;box-shadow:none}
+.login-footer{margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);text-align:center}
+.login-footer p{color:#444;font-size:11px;margin-bottom:4px}
+.login-footer .support{color:var(--gold);font-size:12px;font-weight:600}
+.login-copy{color:#2a2a2a;font-size:10px;text-align:center;margin-top:12px;letter-spacing:.3px}
+
+/* ── SPA ICON ── */
+.spa-icon{border-radius:28%;flex-shrink:0;background:linear-gradient(135deg,var(--gold),var(--gold3));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;box-shadow:0 2px 10px rgba(201,168,76,.55)}
+.spa-icon-sm{width:32px;height:32px;font-size:14px;border-radius:9px}
+.spa-icon-md{width:42px;height:42px;font-size:18px;border-radius:12px}
+.spa-icon-lg{width:60px;height:60px;font-size:26px;border-radius:17px}
+
+/* Alert / info boxes */
+.info-box{border-radius:9px;padding:12px 16px;margin-bottom:12px;font-size:12px}
+.info-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.info-yellow{background:#fef9eb;border:1px solid #fcd34d;color:#92400e;font-size:13px}
+.info-red{background:#fef2f2;border:1px solid #fca5a5;color:var(--err)}
+
+/* Filter pills */
+.pill-group{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pill{padding:6px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:transparent;color:#666;transition:all .12s}
+.pill.active{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold)}
+
+/* Charts container */
+.chart-wrap{position:relative;height:150px}
+
+/* Low stock warning */
+.low-stock-bar{background:#fef9eb;border:1px solid #fcd34d;border-radius:11px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:#92400e;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Staff cards */
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.staff-card{padding:16px 18px}
+.staff-avatar{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900}
+
+/* Responsive */
+@media(max-width:600px){
+  .login-left{display:none}
+  .login-right{width:100%;border-radius:20px;padding:28px 24px 40px}
+  .login-panel{border-radius:0;box-shadow:none}
+  .login-glow1{width:240px;height:240px}
+  #content{padding:16px}
+  .form-grid2,.form-grid3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA & CONSTANTS
+// ══════════════════════════════════════════════════════════════
+const APP={name:"BeautyOS",tagline:"Nền tảng quản lý spa & thẩm mỹ chuyên nghiệp",version:"v3.1 Pro"};
+const G="#C9A84C",DK="#0F0F0F",OK="#16a34a",WN="#d97706",ER="#dc2626",IN="#4f46e5";
+const PC=[G,"#4f46e5","#16a34a","#d97706","#dc2626","#7c3aed"];
+const today=new Date().toISOString().slice(0,10);
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function uid(){return Math.random().toString(36).slice(2,8);}
+function fmt(n){return new Intl.NumberFormat("vi-VN").format(n)+"đ";}
+function fmtM(n){return n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(0)+"K":String(n);}
+
+const PLANS=[
+  {id:"trial",name:"Dùng thử",price:0,color:OK,feats:["Dashboard","Khách hàng","Dịch vụ","Hóa đơn cơ bản"]},
+  {id:"basic",name:"Cơ bản",price:299000,color:G,feats:["Tất cả Trial","Công nợ","Lịch hẹn","Nhân viên","Kho hàng"]},
+  {id:"pro",name:"Chuyên nghiệp",price:699000,color:IN,feats:["Tất cả Basic","Báo cáo nâng cao","Gói liệu trình","Đánh giá","Import Excel"]},
+  {id:"enterprise",name:"Doanh nghiệp",price:1500000,color:"#7c3aed",feats:["Tất cả Pro","Nhiều chi nhánh","API tích hợp","Zalo OA","Hỗ trợ 24/7"]},
+];
+const ROLES_META={
+  platform_owner:{label:"Platform Owner",color:"#7c3aed"},
+  spa_owner:{label:"Chủ spa",color:G},
+  receptionist:{label:"Lễ tân",color:IN},
+  technician:{label:"Kỹ thuật viên",color:OK},
+  accountant:{label:"Kế toán",color:WN},
+};
+const STATUS_META={
+  active:{label:"Hoạt động",color:OK},
+  trial:{label:"Dùng thử",color:WN},
+  expired:{label:"Hết hạn",color:ER},
+  locked:{label:"Đã khóa",color:"#9ca3af"},
+};
+const ISTATUS={paid:{c:OK,l:"Đã TT"},partial:{c:WN,l:"Một phần"},unpaid:{c:ER,l:"Chưa TT"}};
+const OWNER_MENU=[
+  {id:"platform_dash",label:"Tổng quan hệ thống"},
+  {id:"manage_spas",label:"Quản lý Spa"},
+  {id:"manage_users",label:"Tài khoản người dùng"},
+  {id:"subscriptions",label:"Gói & Thanh toán"},
+];
+const SPA_MENU=[
+  {id:"spa_dash",label:"Tổng quan"},
+  {id:"pos",label:"Thu ngân / POS"},
+  {id:"customers",label:"Khách hàng"},
+  {id:"services",label:"Dịch vụ"},
+  {id:"products",label:"Kho & Mỹ phẩm"},
+  {id:"invoices",label:"Hóa đơn"},
+  {id:"debts",label:"Công nợ"},
+  {id:"staff",label:"Nhân viên"},
+  {id:"spa_settings",label:"Cài đặt spa"},
+];
+
+// ── STATE ──
+let STATE = {
+  allUsers:[
+    {id:"u0",email:"buivanquy",pass:"0979502423",role:"platform_owner",name:"Bùi Văn Quý",spaId:null,active:true},
+    {id:"u1",email:"admin@luxuryspa.vn",pass:"spa123",role:"spa_owner",name:"Nguyễn Thị Lan",spaId:"s1",active:true},
+    {id:"u2",email:"letan@luxuryspa.vn",pass:"spa123",role:"receptionist",name:"Trần Thị Mai",spaId:"s1",active:true},
+    {id:"u3",email:"ktv@luxuryspa.vn",pass:"spa123",role:"technician",name:"Lê Thị Hồng",spaId:"s1",active:true},
+    {id:"u4",email:"admin@roseskin.vn",pass:"spa456",role:"spa_owner",name:"Trần Thị Hoa",spaId:"s2",active:true},
+  ],
+  spas:[
+    {id:"s1",name:"Luxury Beauty Spa",address:"123 Nguyễn Huệ, Q1, TP.HCM",phone:"0901234567",email:"admin@luxuryspa.vn",status:"active",plan:"pro",planExpiry:"2025-12-31",logo:"L",monthlyFee:699000,joinDate:"2024-02-01"},
+    {id:"s2",name:"Rose Skin Clinic",address:"45 Lê Lợi, Q3, TP.HCM",phone:"0912345678",email:"admin@roseskin.vn",status:"active",plan:"basic",planExpiry:"2025-06-30",logo:"R",monthlyFee:299000,joinDate:"2024-03-15"},
+    {id:"s3",name:"Jade Wellness Center",address:"88 Trần Hưng Đạo, Q5",phone:"0923456789",email:"admin@jade.vn",status:"trial",plan:"trial",planExpiry:"2024-08-01",logo:"J",monthlyFee:0,joinDate:"2024-06-01"},
+  ],
+  customers:[
+    {id:"c1",spaId:"s1",name:"Nguyễn Thị Bích",phone:"0901111111",source:"Facebook",note:"Da nhạy cảm, tránh AHA",allergy:"AHA",spent:15500000,date:"2024-01-10",dob:"1990-05-15",lastVisit:dAgo(2)},
+    {id:"c2",spaId:"s1",name:"Trần Văn Minh",phone:"0902222222",source:"Zalo",note:"",allergy:"",spent:8200000,date:"2024-02-15",dob:"1985-08-20",lastVisit:dAgo(5)},
+    {id:"c3",spaId:"s1",name:"Lê Thị Thu",phone:"0903333333",source:"TikTok",note:"Mụn viêm, đang điều trị",allergy:"",spent:2100000,date:"2024-05-20",dob:"1995-12-01",lastVisit:dAgo(3)},
+    {id:"c4",spaId:"s1",name:"Phạm Thị Nga",phone:"0904444444",source:"Giới thiệu",note:"Da khô, thích chăm sóc facial",allergy:"Paraben",spent:22000000,date:"2023-11-05",dob:"1988-03-08",lastVisit:dAgo(1)},
+    {id:"c5",spaId:"s1",name:"Võ Thị Kim",phone:"0905555555",source:"Khách cũ",note:"Nám vùng má",allergy:"",spent:6700000,date:"2024-03-12",dob:"1992-07-25",lastVisit:dAgo(65)},
+    {id:"c6",spaId:"s1",name:"Hoàng Thị Lan",phone:"0906666666",source:"Facebook",note:"",allergy:"",spent:1200000,date:today,dob:"1998-01-15",lastVisit:today},
+  ],
+  services:[
+    {id:"sv1",spaId:"s1",name:"Chăm sóc da cơ bản",group:"Chăm sóc da",price:350000,cost:80000,duration:60,commission:15,active:true},
+    {id:"sv2",spaId:"s1",name:"Trị nám cao cấp",group:"Trị nám",price:1200000,cost:300000,duration:90,commission:20,active:true},
+    {id:"sv3",spaId:"s1",name:"Trị mụn chuyên sâu",group:"Trị mụn",price:800000,cost:200000,duration:75,commission:18,active:true},
+    {id:"sv4",spaId:"s1",name:"Phun xăm mày",group:"Phun xăm",price:2500000,cost:500000,duration:120,commission:25,active:true},
+    {id:"sv5",spaId:"s1",name:"Massage thư giãn",group:"Massage",price:450000,cost:100000,duration:60,commission:15,active:true},
+  ],
+  products:[
+    {id:"p1",spaId:"s1",sku:"KCN001",name:"Kem chống nắng SPF50 Anessa",category:"Kem dưỡng",sellPrice:450000,costPrice:180000,stock:8,minStock:5,unit:"tuýp",supplier:"Shiseido VN"},
+    {id:"p2",spaId:"s1",sku:"SRM002",name:"Serum Vitamin C La Roche-Posay",category:"Serum",sellPrice:680000,costPrice:280000,stock:3,minStock:5,unit:"chai",supplier:"L'Oreal VN"},
+    {id:"p3",spaId:"s1",sku:"TTR003",name:"Tẩy trang Bioderma 500ml",category:"Làm sạch",sellPrice:320000,costPrice:130000,stock:15,minStock:5,unit:"chai",supplier:"Bioderma VN"},
+    {id:"p4",spaId:"s1",sku:"MNK004",name:"Mặt nạ Laneige Water Sleeping",category:"Mặt nạ",sellPrice:520000,costPrice:210000,stock:2,minStock:5,unit:"hũ",supplier:"Laneige VN"},
+  ],
+  importLogs:[
+    {id:"im1",spaId:"s1",date:dAgo(10),supplier:"Shiseido VN",note:"Nhập hàng tháng 6",total:3600000,status:"done"},
+    {id:"im2",spaId:"s1",date:dAgo(3),supplier:"L'Oreal VN",note:"Serum bổ sung kho",total:2800000,status:"done"},
+  ],
+  invoices:[
+    {id:"i1",spaId:"s1",code:"HD-001",custId:"c1",customer:"Nguyễn Thị Bích",service:"Trị nám cao cấp",total:1200000,paid:1200000,debt:0,status:"paid",method:"transfer",date:dAgo(1)},
+    {id:"i2",spaId:"s1",code:"HD-002",custId:"c2",customer:"Trần Văn Minh",service:"Massage thư giãn",total:850000,paid:500000,debt:350000,status:"partial",method:"cash",date:dAgo(2)},
+    {id:"i3",spaId:"s1",code:"HD-003",custId:"c3",customer:"Lê Thị Thu",service:"Trị mụn chuyên sâu",total:800000,paid:0,debt:800000,status:"unpaid",method:"cash",date:dAgo(3)},
+    {id:"i4",spaId:"s1",code:"HD-004",custId:"c4",customer:"Phạm Thị Nga",service:"Phun xăm mày",total:2700000,paid:2700000,debt:0,status:"paid",method:"transfer",date:today},
+    {id:"i5",spaId:"s1",code:"HD-005",custId:"c5",customer:"Võ Thị Kim",service:"Trị nám cao cấp",total:1200000,paid:600000,debt:600000,status:"partial",method:"cash",date:dAgo(4)},
+  ],
+  user: null,
+  page: null,
+  sidebarOpen: true,
+};
+
+const REV7=[
+  {d:dAgo(6),v:3200000},{d:dAgo(5),v:5800000},{d:dAgo(4),v:4100000},
+  {d:dAgo(3),v:7600000},{d:dAgo(2),v:5200000},{d:dAgo(1),v:8900000},{d:today,v:4500000},
+];
+
+// Active modals & forms tracking
+let MODAL = {};
+let POS = {custId:"",items:[],disc:0,paid:"",method:"cash"};
+let FILTER = {invoices:"all",custQ:""};
+let chartInstances = {};
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+function getTier(c){
+  const days=Math.floor((new Date()-new Date(c.lastVisit||c.date))/864e5);
+  if(days>60)return{l:"Nguy cơ mất",c:ER};
+  if(c.spent>=10000000)return{l:"VIP",c:G};
+  if(c.spent>=3000000)return{l:"Thân thiết",c:IN};
+  return{l:"Mới",c:OK};
+}
+function bdg(label,color,sz=11){
+  return `<span class="bdg" style="background:${color}22;color:${color};border:1px solid ${color}44;font-size:${sz}px">${label}</span>`;
+}
+function btn(label,cls,onclick,disabled=false,id=""){
+  return `<button class="btn ${cls}" ${onclick?`onclick="${onclick}"`:""}${disabled?' disabled':""} ${id?`id="${id}"`:""}>${label}</button>`;
+}
+function spaIcon(letter,size="md"){
+  return `<div class="spa-icon spa-icon-${size}">${letter||"B"}</div>`;
+}
+function kpiCard(icon,label,value,color,trend,sub){
+  const trendHtml=trend!==undefined?`<span style="color:${trend>0?OK:ER};font-weight:700">${trend>0?"▲":"▼"}${Math.abs(trend)}%</span>`:"";
+  const subHtml=sub?`<span style="color:#aaa">${sub}</span>`:"";
+  return `<div class="card kpi-card">
+    <div class="kpi-icon" style="background:${color}18">${icon}</div>
+    <div style="flex:1">
+      <div class="kpi-label">${label}</div>
+      <div class="kpi-value">${value}</div>
+      <div class="kpi-sub">${trendHtml}${subHtml}</div>
+    </div>
+  </div>`;
+}
+function thRow(cols){
+  return `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead>`;
+}
+function modalHtml(id,title,body,width=520){
+  return `<div class="modal-overlay" id="modal-${id}" onclick="closeModal('${id}')">
+    <div class="modal-box" style="max-width:${width}px" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">${title}</span>
+        <button class="modal-close" onclick="closeModal('${id}')">×</button>
+      </div>
+      <div class="modal-body">${body}</div>
+    </div>
+  </div>`;
+}
+function inpField(label,id,type="text",value="",placeholder="",hint="",req=false){
+  return `<div class="form-group">
+    ${label?`<label class="form-label" for="${id}">${label}${req?'<span style="color:var(--err)"> *</span>':""}</label>`:""}
+    <input class="form-input" type="${type}" id="${id}" value="${esc(value)}" placeholder="${esc(placeholder)}"/>
+    ${hint?`<div class="form-hint">${hint}</div>`:""}
+  </div>`;
+}
+function selField(label,id,options,value=""){
+  return `<div class="form-group">
+    ${label?`<label class="form-label">${label}</label>`:""}
+    <select class="form-input" id="${id}">
+      ${options.map(o=>`<option value="${esc(o.v)}"${o.v==value?" selected":""}>${esc(o.l)}</option>`).join("")}
+    </select>
+  </div>`;
+}
+function esc(s){return String(s||"").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// ══════════════════════════════════════════════════════════════
+// MODAL SYSTEM
+// ══════════════════════════════════════════════════════════════
+function showModal(id,title,body,width=520){
+  const existing=document.getElementById(`modal-${id}`);
+  if(existing)existing.remove();
+  const div=document.createElement("div");
+  div.innerHTML=modalHtml(id,title,body,width);
+  document.body.appendChild(div.firstElementChild);
+}
+function closeModal(id){
+  const el=document.getElementById(`modal-${id}`);
+  if(el)el.remove();
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════════════
+function renderLogin(){
+  return `<div id="login-screen">
+    <div class="login-glow1"></div>
+    <div class="login-glow2"></div>
+    <div class="login-wrap">
+      <div class="login-panel">
+        <div class="login-left">
+          <div class="login-left-icon">B</div>
+          <h1>${APP.name}</h1>
+          <p>${APP.tagline}</p>
+          ${[["🔒","Bảo mật SSL","Dữ liệu mã hóa tuyệt đối"],["☁️","Cloud SaaS","Truy cập mọi lúc mọi nơi"],["📱","Đa thiết bị","PC, iPad, điện thoại"]].map(r=>`
+          <div class="login-feature">
+            <span class="login-feature-icon">${r[0]}</span>
+            <div>
+              <div class="login-feature-title">${r[1]}</div>
+              <div class="login-feature-sub">${r[2]}</div>
+            </div>
+          </div>`).join("")}
+        </div>
+        <div class="login-right">
+          <h2>Đăng nhập</h2>
+          <p>Nhập thông tin tài khoản của bạn</p>
+          <div class="form-group">
+            <label class="login-field-label">Tên đăng nhập</label>
+            <input class="login-input" type="text" id="login-email" placeholder="Nhập tên đăng nhập" autocapitalize="none" autocorrect="off"/>
+          </div>
+          <div class="form-group" style="margin-bottom:24px">
+            <label class="login-field-label">Mật khẩu</label>
+            <div class="login-pw-wrap">
+              <input class="login-input" type="password" id="login-pass" placeholder="Nhập mật khẩu" onkeydown="if(event.key==='Enter')doLogin()"/>
+              <button class="login-pw-toggle" id="login-pw-toggle" onclick="togglePw()">👁️</button>
+            </div>
+          </div>
+          <div id="login-err" style="display:none" class="login-err"><span>⚠️</span><span id="login-err-msg"></span></div>
+          <button class="login-btn" id="login-submit" onclick="doLogin()">Đăng nhập →</button>
+          <div class="login-footer">
+            <p>Gặp sự cố? Liên hệ hỗ trợ</p>
+            <p class="support">support@beautyos.vn · 1800 6868</p>
+          </div>
+          <p class="login-copy">© 2025 ${APP.name} · Bảo mật SSL/TLS</p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function togglePw(){
+  const inp=document.getElementById("login-pass");
+  const btn=document.getElementById("login-pw-toggle");
+  if(!inp)return;
+  const show=inp.type==="password";
+  inp.type=show?"text":"password";
+  btn.textContent=show?"🙈":"👁️";
+}
+function doLogin(){
+  const email=(document.getElementById("login-email")||{}).value||"";
+  const pass=(document.getElementById("login-pass")||{}).value||"";
+  const errEl=document.getElementById("login-err");
+  const errMsg=document.getElementById("login-err-msg");
+  const submitBtn=document.getElementById("login-submit");
+  if(!email||!pass){errMsg.textContent="Vui lòng nhập đầy đủ thông tin.";errEl.style.display="flex";return;}
+  submitBtn.disabled=true;submitBtn.textContent="Đang xác thực...";
+  setTimeout(()=>{
+    const u=STATE.allUsers.find(x=>x.email===email&&x.pass===pass&&x.active);
+    if(u){
+      STATE.user=u;
+      STATE.page=u.role==="platform_owner"?"platform_dash":"spa_dash";
+      renderApp();
+    } else {
+      errMsg.textContent="Tên đăng nhập hoặc mật khẩu không chính xác.";
+      errEl.style.display="flex";
+      submitBtn.disabled=false;submitBtn.textContent="Đăng nhập →";
+    }
+  },600);
+}
+
+// ══════════════════════════════════════════════════════════════
+// SHELL
+// ══════════════════════════════════════════════════════════════
+function renderShell(pageHtml){
+  const {user,sidebarOpen:open}=STATE;
+  const isOwner=user.role==="platform_owner";
+  const menu=isOwner?OWNER_MENU:SPA_MENU;
+  const spa=STATE.spas.find(s=>s.id===user.spaId);
+  const rm=ROLES_META[user.role]||{label:user.role,color:G};
+
+  const navItems=menu.map(m=>`
+    <button class="nav-btn${STATE.page===m.id?" active":""}" onclick="navigate('${m.id}')">
+      ${open?m.label:m.label.slice(0,2)}
+    </button>`).join("");
+
+  const sidebarClass=`${open?"":"collapsed"}`;
+  const spaBlock=open?(isOwner?`<div class="sb-spa"><div style="color:var(--gold);font-size:12px;font-weight:700">Platform Dashboard</div></div>`
+    :spa?`<div class="sb-spa"><div class="sb-spa-label">Spa</div><div class="sb-spa-name">${spa.name}</div>${bdg((STATUS_META[spa.status]||{}).label||"",((STATUS_META[spa.status]||{}).color||"#aaa"),9)}</div>`:"")
+    :"";
+
+  return `<div id="app">
+    <aside id="sidebar" class="${sidebarClass}">
+      <div class="sb-logo">
+        <div class="sb-logo-icon">B</div>
+        ${open?`<div><div class="sb-logo-text">${APP.name}</div><div class="sb-logo-ver">${APP.version}</div></div>`:""}
+      </div>
+      ${spaBlock}
+      <nav>${navItems}</nav>
+      <div class="sb-user">
+        <div class="sb-user-card">
+          <div class="sb-user-avatar" style="background:${rm.color}33;color:${rm.color}">${user.name[0]}</div>
+          ${open?`<div style="overflow:hidden"><div class="sb-user-name">${user.name}</div><div class="sb-user-role">${rm.label}</div></div>`:""}
+        </div>
+        <button class="sb-logout" onclick="doLogout()"><span>⏻</span>${open?" Đăng xuất":""}</button>
+      </div>
+      <button class="sb-toggle" onclick="toggleSidebar()">${open?"‹":"›"}</button>
+    </aside>
+    <div id="main">
+      <header id="topbar">
+        <span style="font-size:13px;color:#bbb">${(menu.find(m=>m.id===STATE.page)||{}).label||""}</span>
+        <div style="display:flex;align-items:center;gap:10">
+          <span style="font-size:11px;color:#c0b8ae">${today}</span>
+          ${bdg(rm.label,rm.color,11)}
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,${G}33,${G}18);display:flex;align-items:center;justify-content:center;color:${G};font-weight:900;font-size:13px;border:1px solid ${G}33">${user.name[0]}</div>
+        </div>
+      </header>
+      <main id="content">${pageHtml}</main>
+    </div>
+  </div>`;
+}
+
+function toggleSidebar(){STATE.sidebarOpen=!STATE.sidebarOpen;renderApp();}
+function navigate(page){STATE.page=page;renderApp();}
+function doLogout(){STATE.user=null;STATE.page=null;renderApp();}
+
+// ══════════════════════════════════════════════════════════════
+// PLATFORM OWNER PAGES
+// ══════════════════════════════════════════════════════════════
+function pagePlatformDash(){
+  const {spas,allUsers}=STATE;
+  const mrr=spas.filter(s=>s.status==="active").reduce((a,s)=>{const pl=PLANS.find(x=>x.id===s.plan);return a+(pl?pl.price:0);},0);
+  const rows=spas.map(s=>{
+    const sm=STATUS_META[s.status]||{label:s.status,color:"#aaa"};
+    const pm=PLANS.find(x=>x.id===s.plan);
+    return `<tr><td>${spaIcon(s.logo,"sm")}<div style="display:inline-block;vertical-align:middle;margin-left:10px"><b>${s.name}</b><div style="font-size:11px;color:#aaa">${s.phone}</div></div></td>
+    <td>${bdg(pm?pm.name:"—",pm?pm.color:G)}</td><td>${bdg(sm.label,sm.color)}</td>
+    <td style="font-size:12px;color:#888">${s.planExpiry}</td>
+    <td style="font-weight:700;color:${OK}">${fmt(s.monthlyFee)}</td>
+    <td style="font-size:12px;color:#aaa">${s.joinDate}</td></tr>`;
+  }).join("");
+  return `<div class="page-title"><h2>Tổng quan hệ thống</h2></div>
+  <p class="page-sub">${APP.name} Platform · ${spas.length} spa · ${today}</p>
+  <div class="grid-kpi">
+    ${kpiCard("🏢","Tổng Spa",spas.length,G,undefined,spas.filter(s=>s.status==="active").length+" hoạt động")}
+    ${kpiCard("💰","Doanh thu / tháng",fmtM(mrr)+"đ",OK,18)}
+    ${kpiCard("👤","Người dùng",allUsers.length,IN)}
+    ${kpiCard("⏳","Dùng thử",spas.filter(s=>s.status==="trial").length,WN)}
+  </div>
+  <div class="card"><b style="font-size:14px;display:block;margin-bottom:14px">Danh sách Spa</b>
+  <div class="overflow-x"><table>${thRow(["Spa","Gói","Trạng thái","Hết hạn","DT/tháng","Tham gia"])}<tbody>${rows}</tbody></table></div></div>`;
+}
+
+function pageManageSpas(){
+  const {spas}=STATE;
+  const rows=spas.map(s=>{
+    const sm=STATUS_META[s.status]||{label:s.status,color:"#aaa"};
+    const pm=PLANS.find(x=>x.id===s.plan);
+    return `<tr>
+    <td><div style="display:flex;align-items:center;gap:9px">${spaIcon(s.logo,"sm")}<div><b>${s.name}</b><div style="font-size:11px;color:#aaa">${s.address}</div></div></div></td>
+    <td style="color:#555;font-size:12px">${s.email}</td>
+    <td>${bdg(pm?pm.name:"—",pm?pm.color:G)}</td>
+    <td>${bdg(sm.label,sm.color)}</td>
+    <td style="font-size:12px;color:#888">${s.planExpiry}</td>
+    <td><div style="display:flex;gap:6px">
+      ${btn("Sửa","btn-ghost btn-sm",`editSpa('${s.id}')`)}
+      ${btn(s.status==="locked"?"Mở khóa":"Khóa",s.status==="locked"?"btn btn-success btn-sm":"btn btn-danger btn-sm",`toggleSpaLock('${s.id}')`)}
+    </div></td></tr>`;
+  }).join("");
+  return `<div class="page-title"><h2>Quản lý Spa</h2>${btn("+ Tạo Spa mới","btn btn-primary","openCreateSpa()")}</div>
+  <p class="page-sub">Tạo và quản lý tài khoản cho từng spa khách hàng</p>
+  <div class="card" style="padding:0;overflow:hidden"><div class="overflow-x">
+  <table>${thRow(["Spa","Email","Gói","Trạng thái","Hết hạn","Thao tác"])}<tbody>${rows}</tbody></table>
+  </div></div>`;
+}
+
+function openCreateSpa(){
+  const planOpts=PLANS.map(x=>({v:x.id,l:x.name+(x.price>0?" — "+fmt(x.price)+"/tháng":" — Miễn phí")}));
+  const body=`<div class="form-grid2">
+    ${inpField("Tên spa","f-spa-name","text","","","",true)}
+    ${inpField("Số điện thoại","f-spa-phone")}
+    ${inpField("Email đăng nhập","f-spa-email","email","","","→ Sẽ là tài khoản chủ spa",true)}
+    ${selField("Gói dịch vụ","f-spa-plan",planOpts,"trial")}
+  </div>
+  ${inpField("Địa chỉ","f-spa-addr")}
+  <div class="info-box info-green">✅ Hệ thống tự động tạo tài khoản chủ spa với mật khẩu tạm <b>BeautyOS@NewSpa</b></div>
+  <div style="display:flex;gap:10;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('create-spa')")}
+    ${btn("Tạo Spa & Tài khoản","btn btn-primary","submitCreateSpa()")}
+  </div>`;
+  showModal("create-spa","Tạo Spa mới",body,540);
+}
+window.openCreateSpa=openCreateSpa;
+
+function submitCreateSpa(){
+  const name=document.getElementById("f-spa-name")?.value||"";
+  const email=document.getElementById("f-spa-email")?.value||"";
+  const phone=document.getElementById("f-spa-phone")?.value||"";
+  const addr=document.getElementById("f-spa-addr")?.value||"";
+  const plan=document.getElementById("f-spa-plan")?.value||"trial";
+  if(!name||!email){alert("Vui lòng nhập tên spa và email");return;}
+  const nid="s"+uid();
+  STATE.spas.push({id:nid,name,address:addr,phone,email,status:"trial",plan,planExpiry:dAgo(-30),logo:name[0].toUpperCase(),monthlyFee:0,joinDate:today});
+  STATE.allUsers.push({id:"u"+uid(),email,pass:"BeautyOS@NewSpa",role:"spa_owner",name:"Admin "+name,spaId:nid,active:true});
+  closeModal("create-spa");
+  alert(`✅ Đã tạo spa: ${name}\nTài khoản: ${email}\nMật khẩu: BeautyOS@NewSpa`);
+  navigate("manage_spas");
+}
+window.submitCreateSpa=submitCreateSpa;
+
+function editSpa(id){
+  const s=STATE.spas.find(x=>x.id===id);if(!s)return;
+  const planOpts=PLANS.map(x=>({v:x.id,l:x.name+(x.price>0?" — "+fmt(x.price)+"/tháng":" — Miễn phí")}));
+  const body=`<div class="form-grid2">
+    ${inpField("Tên spa","e-spa-name","text",s.name,"","",true)}
+    ${inpField("Số điện thoại","e-spa-phone","text",s.phone)}
+    ${inpField("Email","e-spa-email","email",s.email)}
+    ${selField("Gói dịch vụ","e-spa-plan",planOpts,s.plan)}
+  </div>
+  ${inpField("Địa chỉ","e-spa-addr","text",s.address)}
+  <div style="display:flex;gap:10;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('edit-spa')")}
+    ${btn("Cập nhật","btn btn-primary",`submitEditSpa('${id}')`)}
+  </div>`;
+  showModal("edit-spa","Sửa Spa",body,540);
+}
+window.editSpa=editSpa;
+
+function submitEditSpa(id){
+  const name=document.getElementById("e-spa-name")?.value||"";
+  const phone=document.getElementById("e-spa-phone")?.value||"";
+  const addr=document.getElementById("e-spa-addr")?.value||"";
+  const plan=document.getElementById("e-spa-plan")?.value||"trial";
+  STATE.spas=STATE.spas.map(s=>s.id===id?{...s,name,phone,address:addr,plan}:s);
+  closeModal("edit-spa");navigate("manage_spas");
+}
+window.submitEditSpa=submitEditSpa;
+
+function toggleSpaLock(id){
+  STATE.spas=STATE.spas.map(s=>s.id===id?{...s,status:s.status==="locked"?"active":"locked"}:s);
+  navigate("manage_spas");
+}
+window.toggleSpaLock=toggleSpaLock;
+
+function pageManageUsers(){
+  const {allUsers,spas}=STATE;
+  const rows=allUsers.map(u=>{
+    const rm=ROLES_META[u.role]||{label:u.role,color:"#aaa"};
+    const spa=spas.find(s=>s.id===u.spaId);
+    return `<tr>
+    <td><div style="display:flex;align-items:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:50%;background:${rm.color}22;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${rm.color}">${u.name[0]}</div>
+      <b>${u.name}</b></div></td>
+    <td>${bdg(rm.label,rm.color)}</td>
+    <td style="font-size:12px;color:#666">${spa?spa.name:"—"}</td>
+    <td style="font-size:12px;color:#555">${u.email}</td>
+    <td>${bdg(u.active?"Hoạt động":"Đã khóa",u.active?OK:ER)}</td>
+    <td>${btn(u.active?"Khóa":"Mở",u.active?"btn btn-danger btn-sm":"btn btn-success btn-sm",`toggleUserLock('${u.id}')`)}</td></tr>`;
+  }).join("");
+  return `<div class="page-title"><h2>Tài khoản người dùng</h2>${btn("+ Tạo tài khoản","btn btn-primary","openCreateUser()")}</div>
+  <p class="page-sub">Quản lý toàn bộ tài khoản trên nền tảng ${APP.name}</p>
+  <div class="card" style="padding:0;overflow:hidden"><div class="overflow-x">
+  <table>${thRow(["Người dùng","Vai trò","Spa","Email","Trạng thái","Thao tác"])}<tbody>${rows}</tbody></table>
+  </div></div>`;
+}
+
+function openCreateUser(){
+  const roleOpts=Object.keys(ROLES_META).filter(r=>r!=="platform_owner").map(r=>({v:r,l:ROLES_META[r].label}));
+  const spaOpts=[{v:"",l:"— Chọn Spa —"},...STATE.spas.map(s=>({v:s.id,l:s.name}))];
+  const body=`<div class="form-grid2">
+    ${inpField("Họ tên","f-u-name","text","","","",true)}
+    ${inpField("Email","f-u-email","email","","","",true)}
+    ${inpField("Mật khẩu","f-u-pass","password","","","",true)}
+    ${selField("Vai trò","f-u-role",roleOpts,"receptionist")}
+  </div>
+  ${selField("Thuộc Spa","f-u-spa",spaOpts,"")}
+  <div style="display:flex;gap:10;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('create-user')")}
+    ${btn("Tạo tài khoản","btn btn-primary","submitCreateUser()")}
+  </div>`;
+  showModal("create-user","Tạo tài khoản mới",body);
+}
+window.openCreateUser=openCreateUser;
+
+function submitCreateUser(){
+  const name=document.getElementById("f-u-name")?.value||"";
+  const email=document.getElementById("f-u-email")?.value||"";
+  const pass=document.getElementById("f-u-pass")?.value||"";
+  const role=document.getElementById("f-u-role")?.value||"receptionist";
+  const spaId=document.getElementById("f-u-spa")?.value||"";
+  if(!name||!email||!pass)return;
+  STATE.allUsers.push({id:"u"+uid(),email,pass,role,name,spaId,active:true});
+  closeModal("create-user");navigate("manage_users");
+}
+window.submitCreateUser=submitCreateUser;
+
+function toggleUserLock(id){
+  STATE.allUsers=STATE.allUsers.map(u=>u.id===id?{...u,active:!u.active}:u);
+  navigate("manage_users");
+}
+window.toggleUserLock=toggleUserLock;
+
+function pageSubscriptions(){
+  const cards=PLANS.map(pl=>`
+  <div class="card" style="border:2px solid ${pl.color}44">
+    <div style="font-weight:900;color:${pl.color};font-size:17px;margin-bottom:4px;font-family:Georgia,serif">${pl.name}</div>
+    <div style="font-weight:800;font-size:22px;color:var(--dark);margin-bottom:12px">
+      ${pl.price>0?fmt(pl.price):"Miễn phí"}
+      ${pl.price>0?'<span style="font-size:12px;color:#888;font-weight:400">/tháng</span>':""}
+    </div>
+    ${pl.feats.map(f=>`<div style="font-size:12px;color:#555;margin-bottom:4px">✓ ${f}</div>`).join("")}
+    <div style="margin-top:12px">${btn("Chỉnh sửa gói","btn btn-ghost btn-sm","")}</div>
+  </div>`).join("");
+  return `<div class="page-title"><h2>Gói & Thanh toán</h2></div>
+  <p class="page-sub">Các gói dịch vụ ${APP.name}</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">${cards}</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPA PAGES
+// ══════════════════════════════════════════════════════════════
+function pageSpaDash(){
+  const {invoices,customers}=STATE;
+  const rev7total=REV7.reduce((s,d)=>s+d.v,0);
+  const debt=invoices.reduce((s,i)=>s+i.debt,0);
+  const sm={};
+  invoices.filter(i=>i.status==="paid").forEach(i=>{sm[i.service]=(sm[i.service]||0)+i.total;});
+  const recentRows=invoices.slice(0,5).map(inv=>`<tr>
+    <td><code class="inv">${inv.code}</code></td>
+    <td><b>${inv.customer}</b></td>
+    <td style="color:#888;font-size:12px">${inv.service.slice(0,22)}</td>
+    <td><b>${fmt(inv.total)}</b></td>
+    <td style="color:${OK};font-weight:700">${fmt(inv.paid)}</td>
+    <td>${inv.debt>0?`<span style="color:${ER};font-weight:700">${fmt(inv.debt)}</span>`:'<span style="color:#ccc">—</span>'}</td>
+    <td>${bdg(ISTATUS[inv.status].l,ISTATUS[inv.status].c)}</td></tr>`).join("");
+  return `<div class="page-title"><h2>Tổng quan</h2></div>
+  <p class="page-sub">Luxury Beauty Spa · ${today}</p>
+  <div class="grid-kpi">
+    ${kpiCard("💰","Doanh thu 7 ngày",fmtM(rev7total)+"đ",G,14)}
+    ${kpiCard("⚠️","Tổng công nợ",fmtM(debt)+"đ",WN,-8,invoices.filter(i=>i.debt>0).length+" khách")}
+    ${kpiCard("👥","Khách hàng",customers.length,IN)}
+    ${kpiCard("📦","SP sắp hết",STATE.products.filter(x=>x.stock<=x.minStock).length,ER,undefined,"cần nhập thêm")}
+  </div>
+  <div style="display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:16px">
+    <div class="card"><b style="font-size:14px;display:block;margin-bottom:10px">Doanh thu 7 ngày</b>
+      <div class="chart-wrap"><canvas id="chart-bar"></canvas></div>
+    </div>
+    <div class="card"><b style="font-size:14px;display:block;margin-bottom:10px">Theo dịch vụ</b>
+      <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
+    </div>
+  </div>
+  <div class="card"><b style="font-size:14px;display:block;margin-bottom:14px">Hóa đơn gần đây</b>
+  <div class="overflow-x"><table>${thRow(["Mã HĐ","Khách hàng","Dịch vụ","Tổng","Đã trả","Còn nợ","TT"])}<tbody>${recentRows}</tbody></table></div></div>`;
+}
+
+function initDashCharts(){
+  // Bar chart
+  const barCtx=document.getElementById("chart-bar");
+  if(barCtx){
+    if(chartInstances["bar"]){chartInstances["bar"].destroy();}
+    chartInstances["bar"]=new Chart(barCtx,{
+      type:"bar",
+      data:{labels:REV7.map(d=>d.d.slice(5)),datasets:[{data:REV7.map(d=>d.v),
+        backgroundColor:REV7.map((_,i)=>i===6?G:G+"55"),borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>fmtM(c.raw)+"đ"}}},
+        scales:{x:{grid:{display:false},ticks:{color:"#aaa",font:{size:10}}},y:{display:false}}}
+    });
+  }
+  // Pie chart
+  const pieCtx=document.getElementById("chart-pie");
+  if(pieCtx){
+    const sm={};
+    STATE.invoices.filter(i=>i.status==="paid").forEach(i=>{sm[i.service]=(sm[i.service]||0)+i.total;});
+    const labels=Object.keys(sm).map(k=>k.slice(0,14));
+    const vals=Object.values(sm);
+    if(chartInstances["pie"]){chartInstances["pie"].destroy();}
+    chartInstances["pie"]=new Chart(pieCtx,{
+      type:"doughnut",
+      data:{labels,datasets:[{data:vals,backgroundColor:PC,borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:9},boxWidth:8}},
+        tooltip:{callbacks:{label:c=>fmtM(c.raw)+"đ"}}},cutout:"50%"}
+    });
+  }
+}
+
+function pagePOS(){
+  const {customers,products}=STATE;
+  const svcBtns=STATE.services.filter(s=>s.spaId==="s1"&&s.active).map(sv=>
+    `<button onclick="posAddSvc('${sv.id}')" style="padding:6px 13px;border-radius:20px;border:1px solid ${G}55;background:${G}09;color:${G};font-size:12px;cursor:pointer;font-weight:600">+ ${sv.name} (${fmtM(sv.price)}đ)</button>`
+  ).join("");
+  const prodBtns=products.map(pr=>`<button onclick="posAddProd('${pr.id}')" ${pr.stock===0?"disabled":""} style="padding:6px 13px;border-radius:20px;border:1px solid ${pr.stock>0?IN+"55":"#E8E0D5"};background:${pr.stock>0?IN+"09":"#f5f5f5"};color:${pr.stock>0?IN:"#ccc"};font-size:12px;cursor:${pr.stock>0?"pointer":"not-allowed"};font-weight:600">
+    ${pr.stock>0?"+":"✕"} ${pr.name} (${fmtM(pr.sellPrice)}đ)${pr.stock<=pr.minStock&&pr.stock>0?" ⚠️":""}
+  </button>`).join("");
+  const custOpts=[{v:"",l:"— Chọn khách hàng —"},...customers.map(c=>({v:c.id,l:`${c.name} · ${c.phone}`}))];
+
+  return `<div class="page-title"><h2>Thu ngân / POS</h2></div>
+  <p class="page-sub">Tạo hóa đơn và thanh toán nhanh</p>
+  <div style="display:grid;grid-template-columns:1fr 360px;gap:20px">
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <b style="font-size:13px;display:block;margin-bottom:10px">Khách hàng</b>
+        ${selField("","pos-cust",custOpts,POS.custId)}
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <b style="font-size:13px;display:block;margin-bottom:8px">Dịch vụ</b>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px">${svcBtns}</div>
+        <b style="font-size:13px;display:block;margin-bottom:8px">Mỹ phẩm / Sản phẩm</b>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">${prodBtns}</div>
+      </div>
+      <div id="pos-items-wrap"></div>
+    </div>
+    <div>
+      <div class="card">
+        <b style="font-size:13px;display:block;margin-bottom:12px">Thanh toán</b>
+        ${inpField("Giảm giá (đ)","pos-disc","number",POS.disc||"")}
+        <div class="form-group">
+          <label class="form-label">Hình thức</label>
+          <div style="display:flex;gap:7px" id="pos-methods">
+            ${[["cash","💵 TM"],["transfer","🏦 CK"],["qr","📱 QR"]].map(([v,l])=>`
+            <button onclick="posSetMethod('${v}')" style="flex:1;padding:8px 4px;border-radius:9px;border:1.5px solid ${POS.method===v?G:"#E8E0D5"};background:${POS.method===v?G+"18":"transparent"};color:${POS.method===v?G:"#333"};cursor:pointer;font-size:12px;font-weight:700">${l}</button>`).join("")}
+          </div>
+        </div>
+        <div id="pos-paid-field">${inpField("Khách trả","pos-paid","number",POS.paid)}</div>
+        <div id="pos-summary"></div>
+        <div id="pos-debt-warn"></div>
+        <button class="btn btn-primary btn-full" onclick="posConfirm()" id="pos-confirm-btn">✅ Xác nhận thanh toán</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function posCalc(){
+  const sub=POS.items.reduce((s,it)=>s+it.price*it.qty,0);
+  const disc=Number(POS.disc)||0;
+  const total=Math.max(0,sub-disc);
+  const paid=Number(POS.paid)||0;
+  const debt=Math.max(0,total-paid);
+  return{sub,disc,total,paid,debt};
+}
+function posRenderItems(){
+  const wrap=document.getElementById("pos-items-wrap");
+  if(!wrap)return;
+  if(!POS.items.length){wrap.innerHTML="";return;}
+  wrap.innerHTML=`<div class="card" style="padding:0;overflow:hidden">
+    ${POS.items.map((it,i)=>`
+    <div style="display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid #E8E0D5;gap:10px">
+      <span style="flex:1;font-weight:600;font-size:13px">${it.name}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button onclick="posQty(${i},-1)" style="width:24px;height:24px;border-radius:50%;border:1px solid #E8E0D5;background:#fff;cursor:pointer;font-weight:700">−</button>
+        <span style="width:20px;text-align:center;font-weight:700">${it.qty}</span>
+        <button onclick="posQty(${i},1)" style="width:24px;height:24px;border-radius:50%;border:1px solid ${G};background:${G}15;cursor:pointer;color:${G};font-weight:700">+</button>
+      </div>
+      <span style="width:85px;text-align:right;color:${G};font-weight:700;font-size:13px">${fmt(it.price*it.qty)}</span>
+      <button onclick="posRemove(${i})" style="border:none;background:none;color:${ER};cursor:pointer;font-size:18px">×</button>
+    </div>`).join("")}
+  </div>`;
+}
+function posRenderSummary(){
+  const{sub,disc,total,paid,debt}=posCalc();
+  const rows=[["Tạm tính",fmt(sub),"#333"],["Giảm giá","- "+fmt(disc),"#888"],["Thực thu",fmt(total),"#333"],["Đã trả",fmt(paid),OK]];
+  const s=document.getElementById("pos-summary");
+  const w=document.getElementById("pos-debt-warn");
+  if(s)s.innerHTML=`<div style="background:#FAF7F2;border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid #E8E0D5">
+    ${rows.map(r=>`<div style="display:flex;justify-content:space-between;margin-bottom:5px">
+      <span style="font-size:13px;color:#666">${r[0]}</span>
+      <span style="font-weight:${r[0]==="Thực thu"?900:700};font-size:${r[0]==="Thực thu"?15:13}px;color:${r[2]}">${r[1]}</span>
+    </div>`).join("")}
+    ${debt>0?`<div style="display:flex;justify-content:space-between;padding-top:5px;margin-top:5px;border-top:1px dashed #E8E0D5">
+      <span style="font-size:13px;color:${ER}">Công nợ</span><span style="font-weight:700;color:${ER}">${fmt(debt)}</span>
+    </div>`:""}
+  </div>`;
+  if(w)w.innerHTML=debt>0?`<div class="info-box info-yellow" style="margin-bottom:12px">⚠️ Sẽ tạo công nợ ${fmt(debt)} cho khách hàng</div>`:"";
+  // update paid field label
+  const pf=document.getElementById("pos-paid-field");
+  if(pf)pf.innerHTML=inpField(`Khách trả — Tổng: ${fmt(total)}`,"pos-paid","number",POS.paid);
+  document.getElementById("pos-paid")?.addEventListener("input",e=>{POS.paid=e.target.value;posRenderSummary();});
+  // update discount
+  document.getElementById("pos-disc")?.addEventListener("input",e=>{POS.disc=Number(e.target.value)||0;posRenderSummary();});
+}
+function posSetMethod(m){
+  POS.method=m;
+  if(m==="qr"){
+    const{total}=posCalc();
+    showModal("qr","📱 Quét mã QR VietQR",`
+    <div style="text-align:center;padding:10px 0">
+      <div style="width:160px;height:160px;margin:0 auto 14px;background:#FAF7F2;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#aaa;border:2px solid #E8E0D5">[QR Code VietQR]</div>
+      <div style="font-weight:900;font-size:18px;margin-bottom:3px">${fmt(total)}</div>
+      <div style="color:#888;font-size:12px">Luxury Beauty Spa</div>
+      <div style="margin-top:14px"><button class="btn btn-primary btn-full" onclick="closeModal('qr');posSetMethodDirect('qr')">✅ Đã nhận tiền</button></div>
+    </div>`,320);
+  }
+  navigate("pos");
+}
+window.posSetMethod=posSetMethod;
+window.posSetMethodDirect=function(m){POS.method=m;};
+
+function posAddSvc(id){
+  const sv=STATE.services.find(x=>x.id===id);if(!sv)return;
+  const ex=POS.items.find(i=>i.id===id&&i.t==="sv");
+  if(ex)POS.items=POS.items.map(i=>i.id===id&&i.t==="sv"?{...i,qty:i.qty+1}:i);
+  else POS.items.push({id:sv.id,t:"sv",name:sv.name,price:sv.price,qty:1});
+  posRenderItems();posRenderSummary();
+}
+window.posAddSvc=posAddSvc;
+
+function posAddProd(id){
+  const pr=STATE.products.find(x=>x.id===id);if(!pr||pr.stock===0)return;
+  const ex=POS.items.find(i=>i.id===id&&i.t==="p");
+  if(ex)POS.items=POS.items.map(i=>i.id===id&&i.t==="p"?{...i,qty:i.qty+1}:i);
+  else POS.items.push({id:pr.id,t:"p",name:pr.name+" 🛍",price:pr.sellPrice,qty:1});
+  posRenderItems();posRenderSummary();
+}
+window.posAddProd=posAddProd;
+
+function posQty(i,delta){
+  POS.items=POS.items.map((it,j)=>j===i?{...it,qty:Math.max(1,it.qty+delta)}:it);
+  posRenderItems();posRenderSummary();
+}
+window.posQty=posQty;
+
+function posRemove(i){
+  POS.items=POS.items.filter((_,j)=>j!==i);
+  posRenderItems();posRenderSummary();
+}
+window.posRemove=posRemove;
+
+function posConfirm(){
+  const custId=(document.getElementById("pos-cust")||{}).value||POS.custId;
+  if(!custId||!POS.items.length){alert("Vui lòng chọn khách hàng và ít nhất 1 dịch vụ");return;}
+  const{total,paid,debt}=posCalc();
+  const cust=STATE.customers.find(c=>c.id===custId);
+  STATE.products=STATE.products.map(pr=>{
+    const it=POS.items.find(i=>i.id===pr.id&&i.t==="p");
+    return it?{...pr,stock:Math.max(0,pr.stock-it.qty)}:pr;
+  });
+  const inv={id:"i"+uid(),spaId:"s1",code:"HD-"+String(STATE.invoices.length+1).padStart(3,"0"),
+    custId,customer:cust?cust.name:"",service:POS.items.map(i=>i.name).join(", "),
+    total,paid,debt,status:debt<=0?"paid":paid>0?"partial":"unpaid",method:POS.method,date:today};
+  STATE.invoices.unshift(inv);
+  POS={custId:"",items:[],disc:0,paid:"",method:"cash"};
+  alert("✅ Hóa đơn "+inv.code+" đã tạo thành công!");
+  navigate("pos");
+}
+window.posConfirm=posConfirm;
+
+function pageCustomers(){
+  const q=FILTER.custQ||"";
+  const list=STATE.customers.filter(c=>c.spaId===STATE.user.spaId&&
+    (c.name.toLowerCase().includes(q.toLowerCase())||c.phone.includes(q)));
+  const rows=list.map(c=>{
+    const tier=getTier(c);
+    return `<tr>
+    <td><div style="display:flex;align-items:center;gap:9px">
+      <div style="width:34px;height:34px;border-radius:10px;background:${tier.c}22;color:${tier.c};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">${c.name[0]}</div>
+      <div><b>${c.name}</b><div style="font-size:11px;color:#aaa">${c.phone}</div></div>
+    </div></td>
+    <td>${bdg(tier.l,tier.c)}</td>
+    <td style="color:#777;font-size:12px">${c.source}</td>
+    <td style="font-weight:700;color:${G}">${fmt(c.spent)}</td>
+    <td style="color:#aaa;font-size:12px">${c.note||"—"}</td>
+    <td><div style="display:flex;gap:6px">
+      ${btn("Hồ sơ","btn btn-ghost btn-sm",`viewCustomer('${c.id}')`)}
+      ${btn("Zalo","btn btn-secondary btn-sm",`window.open('https://zalo.me/${c.phone.replace(/^0/,"84")}','_blank')`)}
+    </div></td></tr>`;
+  }).join("");
+  return `<div class="page-title"><h2>Khách hàng</h2>${btn("+ Thêm khách","btn btn-primary","openAddCustomer()")}</div>
+  <p class="page-sub">${list.length} khách hàng · phân loại tự động</p>
+  <div class="card" style="margin-bottom:14px;padding:13px 18px">
+    <input id="cust-search" class="form-input" placeholder="🔍 Tìm tên, số điện thoại..." value="${esc(q)}" oninput="custSearch(this.value)"/>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden"><div class="overflow-x">
+  <table>${thRow(["Khách hàng","Hạng","Nguồn","Chi tiêu","Ghi chú","Thao tác"])}<tbody>${rows}</tbody></table>
+  </div></div>`;
+}
+function custSearch(v){FILTER.custQ=v;
+  const content=document.getElementById("content");
+  if(content)content.innerHTML=pageCustomers();
+}
+window.custSearch=custSearch;
+
+function openAddCustomer(){
+  const srcOpts=["Facebook","Zalo","TikTok","Google","Giới thiệu","Khách cũ","Khác"].map(s=>({v:s,l:s}));
+  const body=`<div class="form-grid2">
+    ${inpField("Họ tên","fc-name","text","","","",true)}
+    ${inpField("Số điện thoại","fc-phone","text","","","",true)}
+    ${inpField("Ngày sinh","fc-dob","date")}
+    ${selField("Nguồn khách","fc-source",srcOpts,"Facebook")}
+  </div>
+  ${inpField("Ghi chú tình trạng da","fc-note","text","","VD: Da nhạy cảm, đang điều trị mụn...")}
+  ${inpField("Dị ứng","fc-allergy","text","","VD: AHA, Paraben, Retinol...")}
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('add-cust')")}
+    ${btn("Lưu khách hàng","btn btn-primary","submitAddCustomer()")}
+  </div>`;
+  showModal("add-cust","Thêm khách hàng mới",body,520);
+}
+window.openAddCustomer=openAddCustomer;
+
+function submitAddCustomer(){
+  const name=document.getElementById("fc-name")?.value||"";
+  const phone=document.getElementById("fc-phone")?.value||"";
+  const dob=document.getElementById("fc-dob")?.value||"";
+  const source=document.getElementById("fc-source")?.value||"Facebook";
+  const note=document.getElementById("fc-note")?.value||"";
+  const allergy=document.getElementById("fc-allergy")?.value||"";
+  if(!name||!phone)return;
+  STATE.customers.unshift({id:"c"+uid(),spaId:STATE.user.spaId,name,phone,source,note,allergy,dob,spent:0,date:today,lastVisit:today});
+  closeModal("add-cust");navigate("customers");
+}
+window.submitAddCustomer=submitAddCustomer;
+
+function viewCustomer(id){
+  const c=STATE.customers.find(x=>x.id===id);if(!c)return;
+  const tier=getTier(c);
+  const body=`<div style="display:flex;align-items:center;gap:14px;padding:16px;background:${G}09;border:1px solid ${G}22;border-radius:12px;margin-bottom:16px">
+    <div style="width:52px;height:52px;border-radius:14px;background:${tier.c}22;color:${tier.c};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px">${c.name[0]}</div>
+    <div style="flex:1"><b style="font-size:17px">${c.name}</b><div style="font-size:12px;color:#888;margin-top:2px">${c.phone}</div></div>
+    ${bdg(tier.l,tier.c,12)}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    ${[["💰 Tổng chi tiêu",fmt(c.spent)],["📢 Nguồn",c.source],["🌡 Ghi chú da",c.note||"—"],
+      ["⚠️ Dị ứng",c.allergy||"Không có"],["📅 Lần ghé gần nhất",c.lastVisit||"—"],
+      ["🎂 Ngày sinh",c.dob||"—"]].map(r=>`
+    <div style="padding:11px;background:#FAF7F2;border-radius:9px;border:1px solid #E8E0D5">
+      <div style="font-size:10px;color:#aaa;margin-bottom:3px">${r[0]}</div>
+      <div style="font-weight:700;font-size:13px">${r[1]}</div>
+    </div>`).join("")}
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    ${btn("📱 Zalo","btn btn-ghost",`window.open('https://zalo.me/${c.phone.replace(/^0/,"84")}','_blank')`)}
+    ${btn("Đóng","btn btn-secondary","closeModal('view-cust')")}
+  </div>`;
+  showModal("view-cust","Hồ sơ khách hàng",body,520);
+}
+window.viewCustomer=viewCustomer;
+
+function pageServices(){
+  const svcs=STATE.services.filter(s=>s.spaId==="s1");
+  const rows=svcs.map(s=>`<tr>
+    <td><b>${s.name}</b></td>
+    <td>${bdg(s.group,G)}</td>
+    <td style="font-weight:700;color:${G}">${fmt(s.price)}</td>
+    <td style="color:#888">${fmt(s.cost)}</td>
+    <td style="font-weight:700;color:${OK}">${Math.round((s.price-s.cost)/s.price*100)}%</td>
+    <td style="color:#888">${s.duration}p</td>
+    <td style="color:#888">${s.commission}%</td>
+    <td>${bdg(s.active?"Đang bán":"Ngừng",s.active?OK:"#aaa")}</td>
+    <td>${btn("Bật/Tắt","btn btn-secondary btn-sm",`toggleService('${s.id}')`)}</td></tr>`).join("");
+  return `<div class="page-title"><h2>Dịch vụ</h2>${btn("+ Thêm dịch vụ","btn btn-primary","openAddService()")}</div>
+  <p class="page-sub">${svcs.length} dịch vụ · ${svcs.filter(s=>s.active).length} đang bán</p>
+  <div class="card" style="padding:0;overflow:hidden"><div class="overflow-x">
+  <table>${thRow(["Tên dịch vụ","Nhóm","Giá bán","Giá vốn","Lợi nhuận","TG","HH%","TT",""])}<tbody>${rows}</tbody></table>
+  </div></div>`;
+}
+function toggleService(id){
+  STATE.services=STATE.services.map(s=>s.id===id?{...s,active:!s.active}:s);
+  navigate("services");
+}
+window.toggleService=toggleService;
+
+function openAddService(){
+  const grpOpts=["Chăm sóc da","Trị nám","Trị mụn","Phun xăm","Massage","Gội đầu","Khác"].map(g=>({v:g,l:g}));
+  const body=`${inpField("Tên dịch vụ","fs-name","text","","","",true)}
+  ${selField("Nhóm","fs-group",grpOpts,"Chăm sóc da")}
+  <div class="form-grid2">
+    ${inpField("Giá bán","fs-price","number","","","",true)}
+    ${inpField("Giá vốn","fs-cost","number")}
+    ${inpField("Thời gian (phút)","fs-dur","number","60")}
+    ${inpField("Hoa hồng (%)","fs-comm","number","15")}
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('add-svc')")}
+    ${btn("Thêm dịch vụ","btn btn-primary","submitAddService()")}
+  </div>`;
+  showModal("add-svc","Thêm dịch vụ mới",body);
+}
+window.openAddService=openAddService;
+
+function submitAddService(){
+  const name=document.getElementById("fs-name")?.value||"";
+  const price=Number(document.getElementById("fs-price")?.value)||0;
+  const cost=Number(document.getElementById("fs-cost")?.value)||0;
+  const duration=Number(document.getElementById("fs-dur")?.value)||60;
+  const commission=Number(document.getElementById("fs-comm")?.value)||15;
+  const group=document.getElementById("fs-group")?.value||"Chăm sóc da";
+  if(!name||!price)return;
+  STATE.services.push({id:"sv"+uid(),spaId:"s1",name,group,price,cost,duration,commission,active:true});
+  closeModal("add-svc");navigate("services");
+}
+window.submitAddService=submitAddService;
+
+function pageProducts(){
+  const{products,importLogs}=STATE;
+  const low=products.filter(x=>x.stock<=x.minStock);
+  const rows=products.map(pr=>{
+    const isLow=pr.stock<=pr.minStock;
+    return `<tr class="${isLow?"danger":""}">
+    <td><code class="inv">${pr.sku}</code></td>
+    <td><b>${pr.name}</b></td>
+    <td>${bdg(pr.category,IN)}</td>
+    <td style="font-weight:700;color:${G}">${fmt(pr.sellPrice)}</td>
+    <td style="color:#888">${fmt(pr.costPrice)}</td>
+    <td style="font-weight:700;color:${OK}">${Math.round((pr.sellPrice-pr.costPrice)/pr.sellPrice*100)}%</td>
+    <td><span style="font-weight:900;color:${isLow?ER:"#333"};font-size:15px">${pr.stock}</span>${isLow?' <span style="font-size:10px;color:var(--err)">⚠️</span>':""}</td>
+    <td style="color:#888;font-size:12px">${pr.unit}</td>
+    <td style="color:#777;font-size:11px">${pr.supplier}</td>
+    <td><div style="display:flex;gap:5px">
+      ${btn("Sửa","btn btn-ghost btn-sm",`editProduct('${pr.id}')`)}
+      ${btn("+Nhập","btn btn-success btn-sm",`openImport('${pr.id}')`)}
+    </div></td></tr>`;
+  }).join("");
+  const logRows=importLogs.map(l=>`<tr>
+    <td style="color:#888;font-size:12px">${l.date}</td>
+    <td><b>${l.supplier||"—"}</b></td>
+    <td style="color:#777;font-size:12px">${l.note||"—"}</td>
+    <td style="font-weight:700;color:${WN}">${fmt(l.total)}</td>
+    <td>${bdg("Hoàn thành",OK)}</td></tr>`).join("");
+  return `<div class="page-title"><h2>Kho & Mỹ phẩm</h2>
+    <div style="display:flex;gap:8px">
+      ${btn("📥 Nhập hàng","btn btn-ghost","openImport('')")}
+      ${btn("+ Thêm sản phẩm","btn btn-primary","openAddProduct()")}
+    </div>
+  </div>
+  <p class="page-sub">${products.length} sản phẩm · ${low.length} cần nhập thêm</p>
+  ${low.length>0?`<div class="low-stock-bar"><b>⚠️ Sắp hết hàng:</b>${low.map(x=>bdg(x.name+" (còn "+x.stock+")",WN)).join(" ")}</div>`:""}
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px"><div class="overflow-x">
+  <table>${thRow(["SKU","Tên sản phẩm","Loại","Giá bán","Giá nhập","Lợi nhuận","Tồn kho","Đơn vị","Nhà cung cấp","Thao tác"])}<tbody>${rows}</tbody></table>
+  </div></div>
+  <div class="card"><b style="font-size:14px;display:block;margin-bottom:14px">📋 Lịch sử nhập hàng</b>
+  <div class="overflow-x"><table>${thRow(["Ngày","Nhà cung cấp","Ghi chú","Tổng tiền nhập","TT"])}<tbody>${logRows}</tbody></table></div></div>`;
+}
+
+function openAddProduct(){
+  const catOpts=["Kem dưỡng","Serum","Toner","Mặt nạ","Làm sạch","Chống nắng","Tinh dầu","Khác"].map(c=>({v:c,l:c}));
+  const body=`<div class="form-grid2">
+    ${inpField("Mã SKU","fp-sku","text","","VD: KCN001")}
+    ${selField("Danh mục","fp-cat",catOpts,"Kem dưỡng")}
+  </div>
+  ${inpField("Tên sản phẩm","fp-name","text","","","",true)}
+  <div class="form-grid3">
+    ${inpField("Giá bán","fp-sell","number","","","",true)}
+    ${inpField("Giá nhập","fp-cost","number")}
+    ${inpField("Tồn kho","fp-stock","number","0")}
+    ${inpField("Cảnh báo thấp","fp-min","number","5")}
+    ${inpField("Đơn vị","fp-unit","text","","chai, hũ, tuýp...")}
+    ${inpField("Nhà cung cấp","fp-sup")}
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('add-prod')")}
+    ${btn("Thêm sản phẩm","btn btn-primary","submitAddProduct()")}
+  </div>`;
+  showModal("add-prod","Thêm sản phẩm mới",body,560);
+}
+window.openAddProduct=openAddProduct;
+
+function submitAddProduct(){
+  const name=document.getElementById("fp-name")?.value||"";
+  const sellPrice=Number(document.getElementById("fp-sell")?.value)||0;
+  if(!name||!sellPrice)return;
+  STATE.products.push({id:"p"+uid(),spaId:"s1",
+    sku:document.getElementById("fp-sku")?.value||"",
+    name,category:document.getElementById("fp-cat")?.value||"Kem dưỡng",
+    sellPrice,costPrice:Number(document.getElementById("fp-cost")?.value)||0,
+    stock:Number(document.getElementById("fp-stock")?.value)||0,
+    minStock:Number(document.getElementById("fp-min")?.value)||5,
+    unit:document.getElementById("fp-unit")?.value||"",
+    supplier:document.getElementById("fp-sup")?.value||""});
+  closeModal("add-prod");navigate("products");
+}
+window.submitAddProduct=submitAddProduct;
+
+function editProduct(id){
+  const pr=STATE.products.find(x=>x.id===id);if(!pr)return;
+  const catOpts=["Kem dưỡng","Serum","Toner","Mặt nạ","Làm sạch","Chống nắng","Tinh dầu","Khác"].map(c=>({v:c,l:c}));
+  const body=`<div class="form-grid2">
+    ${inpField("Mã SKU","ep-sku","text",pr.sku)}
+    ${selField("Danh mục","ep-cat",catOpts,pr.category)}
+  </div>
+  ${inpField("Tên sản phẩm","ep-name","text",pr.name,"","",true)}
+  <div class="form-grid3">
+    ${inpField("Giá bán","ep-sell","number",pr.sellPrice,"","",true)}
+    ${inpField("Giá nhập","ep-cost","number",pr.costPrice)}
+    ${inpField("Tồn kho","ep-stock","number",pr.stock)}
+    ${inpField("Cảnh báo thấp","ep-min","number",pr.minStock)}
+    ${inpField("Đơn vị","ep-unit","text",pr.unit)}
+    ${inpField("Nhà cung cấp","ep-sup","text",pr.supplier)}
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('edit-prod')")}
+    ${btn("Cập nhật","btn btn-primary",`submitEditProduct('${id}')`)}
+  </div>`;
+  showModal("edit-prod","Sửa sản phẩm",body,560);
+}
+window.editProduct=editProduct;
+
+function submitEditProduct(id){
+  STATE.products=STATE.products.map(p=>p.id!==id?p:{...p,
+    sku:document.getElementById("ep-sku")?.value||p.sku,
+    name:document.getElementById("ep-name")?.value||p.name,
+    category:document.getElementById("ep-cat")?.value||p.category,
+    sellPrice:Number(document.getElementById("ep-sell")?.value)||p.sellPrice,
+    costPrice:Number(document.getElementById("ep-cost")?.value)||p.costPrice,
+    stock:Number(document.getElementById("ep-stock")?.value)||p.stock,
+    minStock:Number(document.getElementById("ep-min")?.value)||p.minStock,
+    unit:document.getElementById("ep-unit")?.value||p.unit,
+    supplier:document.getElementById("ep-sup")?.value||p.supplier});
+  closeModal("edit-prod");navigate("products");
+}
+window.submitEditProduct=submitEditProduct;
+
+function openImport(productId){
+  const prodOpts=[{v:"",l:"— Chọn sản phẩm —"},...STATE.products.map(x=>({v:x.id,l:`${x.name} (tồn: ${x.stock})`}))];
+  const body=`${selField("Sản phẩm nhập","fi-prod",prodOpts,productId)}
+  <div class="form-grid2">
+    ${inpField("Số lượng nhập","fi-qty","number","","","",true)}
+    ${inpField("Nhà cung cấp","fi-sup")}
+  </div>
+  ${inpField("Ghi chú","fi-note")}
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('import')")}
+    ${btn("✅ Xác nhận nhập kho","btn btn-success","submitImport()")}
+  </div>`;
+  showModal("import","📥 Nhập hàng vào kho",body,460);
+  if(productId){setTimeout(()=>{const el=document.getElementById("fi-prod");if(el)el.value=productId;},50);}
+}
+window.openImport=openImport;
+
+function submitImport(){
+  const productId=document.getElementById("fi-prod")?.value||"";
+  const qty=Number(document.getElementById("fi-qty")?.value)||0;
+  const supplier=document.getElementById("fi-sup")?.value||"";
+  const note=document.getElementById("fi-note")?.value||"";
+  if(!productId||!qty)return;
+  const pr=STATE.products.find(x=>x.id===productId);
+  STATE.products=STATE.products.map(x=>x.id===productId?{...x,stock:x.stock+qty}:x);
+  STATE.importLogs.unshift({id:"im"+uid(),spaId:"s1",date:today,supplier,note,total:qty*(pr?pr.costPrice:0),status:"done"});
+  closeModal("import");
+  alert(`✅ Nhập kho thành công! Đã thêm ${qty} ${pr?pr.unit:""} ${pr?pr.name:""}`);
+  navigate("products");
+}
+window.submitImport=submitImport;
+
+function pageInvoices(){
+  const fil=FILTER.invoices||"all";
+  const invs=STATE.invoices.filter(i=>i.spaId===STATE.user.spaId&&(fil==="all"||i.status===fil));
+  const M={cash:"💵 TM",transfer:"🏦 CK",qr:"📱 QR"};
+  const rows=invs.map(inv=>`<tr>
+    <td><code class="inv">${inv.code}</code></td>
+    <td><b>${inv.customer}</b></td>
+    <td style="color:#888;font-size:12px">${inv.service.slice(0,24)}</td>
+    <td><b>${fmt(inv.total)}</b></td>
+    <td style="color:${OK};font-weight:700">${fmt(inv.paid)}</td>
+    <td>${inv.debt>0?`<span style="color:${ER};font-weight:700">${fmt(inv.debt)}</span>`:'<span style="color:#ccc">—</span>'}</td>
+    <td style="font-size:12px;color:#777">${M[inv.method]||inv.method}</td>
+    <td>${bdg(ISTATUS[inv.status].l,ISTATUS[inv.status].c)}</td>
+    <td style="font-size:11px;color:#aaa">${inv.date}</td></tr>`).join("");
+  const pills=[["all","Tất cả"],["paid","Đã TT"],["partial","Một phần"],["unpaid","Chưa TT"]].map(
+    ([v,l])=>`<button class="pill${fil===v?" active":""}" onclick="setInvFilter('${v}')">${l}</button>`).join("");
+  return `<div class="page-title"><h2>Hóa đơn</h2></div>
+  <p class="page-sub">${STATE.invoices.length} hóa đơn</p>
+  <div class="pill-group">${pills}</div>
+  <div class="card" style="padding:0;overflow:hidden"><div class="overflow-x">
+  <table>${thRow(["Mã HĐ","Khách hàng","Dịch vụ","Tổng","Đã trả","Còn nợ","HT","TT","Ngày"])}<tbody>${rows}</tbody></table>
+  </div></div>`;
+}
+function setInvFilter(v){FILTER.invoices=v;navigate("invoices");}
+window.setInvFilter=setInvFilter;
+
+function pageDebts(){
+  const debts=STATE.invoices.filter(i=>i.spaId===STATE.user.spaId&&i.debt>0);
+  const total=debts.reduce((s,d)=>s+d.debt,0);
+  const rows=debts.map(d=>`<tr class="danger">
+    <td><code class="inv">${d.code}</code></td>
+    <td><b>${d.customer}</b></td>
+    <td>${fmt(d.total)}</td>
+    <td style="color:${OK};font-weight:700">${fmt(d.paid)}</td>
+    <td><span style="font-weight:900;color:${ER};font-size:16px">${fmt(d.debt)}</span></td>
+    <td>${bdg(d.status==="partial"?"Một phần":"Chưa trả",d.status==="partial"?WN:ER)}</td>
+    <td style="font-size:11px;color:#aaa">${d.date}</td>
+    <td>${btn("Thu nợ","btn btn-primary btn-sm",`openCollectDebt('${d.id}')`)}</td></tr>`).join("");
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <h2 style="font-size:21px;font-weight:900;color:var(--dark)">Công nợ</h2>
+    <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:8px 16px;color:${ER};font-weight:800;font-size:14px">Tổng nợ: ${fmt(total)}</div>
+  </div>
+  <p class="page-sub">${debts.length} khoản chưa thu</p>
+  ${debts.length===0?`<div class="card"><div class="empty-state"><div class="empty-icon">🎉</div><p>Tất cả khách đã thanh toán đầy đủ!</p></div></div>`:`
+  <div class="card" style="padding:0;overflow:hidden"><div class="overflow-x">
+  <table>${thRow(["Mã HĐ","Khách hàng","Tổng HĐ","Đã trả","Còn nợ","TT","Ngày","Thao tác"])}<tbody>${rows}</tbody></table>
+  </div></div>`}`;
+}
+function openCollectDebt(id){
+  const d=STATE.invoices.find(x=>x.id===id);if(!d)return;
+  const body=`<div class="info-box info-yellow" style="margin-bottom:14px">
+    ${[["Tổng HĐ",fmt(d.total),"#333"],["Đã trả",fmt(d.paid),OK],["Còn lại",fmt(d.debt),ER]].map(r=>`
+    <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+      <span style="color:#92400e;font-size:13px">${r[0]}:</span><b style="color:${r[2]}">${r[1]}</b>
+    </div>`).join("")}
+  </div>
+  ${inpField("Số tiền thu (đ)","dc-amt","number",d.debt)}
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    ${btn("Hủy","btn btn-secondary","closeModal('collect-debt')")}
+    ${btn("✅ Xác nhận thu nợ","btn btn-primary",`submitCollectDebt('${id}')`)}
+  </div>`;
+  showModal("collect-debt",`Thu nợ — ${d.customer}`,body,400);
+}
+window.openCollectDebt=openCollectDebt;
+
+function submitCollectDebt(id){
+  const n=Number(document.getElementById("dc-amt")?.value)||0;if(!n)return;
+  STATE.invoices=STATE.invoices.map(i=>{
+    if(i.id!==id)return i;
+    const np=i.paid+n,nd=Math.max(0,i.total-np);
+    return{...i,paid:np,debt:nd,status:nd===0?"paid":np>0?"partial":"unpaid"};
+  });
+  closeModal("collect-debt");navigate("debts");
+}
+window.submitCollectDebt=submitCollectDebt;
+
+function pageStaff(){
+  const staff=STATE.allUsers.filter(u=>u.spaId===STATE.user.spaId&&u.role!=="spa_owner");
+  if(!staff.length)return `<div class="page-title"><h2>Nhân viên</h2></div>
+    <p class="page-sub">0 nhân viên trong spa</p>
+    <div class="card"><div class="empty-state"><div class="empty-icon">👩‍💼</div><p>Chưa có nhân viên nào</p></div></div>`;
+  const cards=staff.map(u=>{
+    const rm=ROLES_META[u.role]||{label:u.role,color:"#aaa"};
+    return `<div class="card staff-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="staff-avatar" style="background:${rm.color}22;color:${rm.color}">${u.name[0]}</div>
+      <div><b>${u.name}</b><div style="font-size:11px;color:#aaa">${u.email}</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      ${bdg(rm.label,rm.color)}${bdg(u.active?"Đang làm":"Đã khóa",u.active?OK:ER)}
+    </div></div>`;
+  }).join("");
+  return `<div class="page-title"><h2>Nhân viên</h2></div>
+  <p class="page-sub">${staff.length} nhân viên trong spa</p>
+  <div class="staff-grid">${cards}</div>`;
+}
+
+function pageSpaSettings(){
+  const spa=STATE.spas.find(s=>s.id===STATE.user.spaId);
+  const pm=spa?PLANS.find(x=>x.id===spa.plan):null;
+  return `<div class="page-title"><h2>Cài đặt Spa</h2></div>
+  <p class="page-sub">Thông tin và cấu hình spa của bạn</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <b style="font-size:14px;display:block;margin-bottom:12px">Thông tin Spa</b>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px;background:${G}09;border:1px solid ${G}22;border-radius:12px;margin-bottom:16px">
+        ${spaIcon(spa?spa.logo:"B","md")}
+        <div><b style="font-size:15px">${spa?spa.name:""}</b><div style="font-size:12px;color:#888">${spa?spa.address:""}</div></div>
+      </div>
+      ${inpField("Tên spa","set-name","text",spa?spa.name:"")}
+      ${inpField("Địa chỉ","set-addr","text",spa?spa.address:"")}
+      ${inpField("Số điện thoại","set-phone","text",spa?spa.phone:"")}
+      <div id="set-msg"></div>
+      ${btn("Lưu thay đổi","btn btn-primary","saveSpaSettings()")}
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <b style="font-size:14px;display:block;margin-bottom:12px">Gói dịch vụ đang dùng</b>
+        ${pm?`<div style="padding:14px;border-radius:10px;border:2px solid ${pm.color};background:${pm.color}08;margin-bottom:10px">
+          <div style="font-weight:900;color:${pm.color};font-size:16px;font-family:Georgia,serif">${pm.name}</div>
+          <div style="font-weight:700;margin-top:4px">${pm.price>0?fmt(pm.price)+"/tháng":"Miễn phí"}</div>
+          <div style="font-size:12px;color:#aaa;margin-top:4px">Hết hạn: ${spa&&spa.planExpiry}</div>
+        </div>
+        ${btn("Nâng cấp gói","btn btn-ghost btn-sm","")}`:""} 
+      </div>
+      <div class="card">
+        <b style="font-size:14px;display:block;margin-bottom:10px">Bảo mật</b>
+        ${inpField("Mật khẩu mới","set-pw","password")}
+        ${btn("Đổi mật khẩu","btn btn-ghost btn-sm","")}
+      </div>
+    </div>
+  </div>`;
+}
+function saveSpaSettings(){
+  const spaId=STATE.user.spaId;
+  const name=document.getElementById("set-name")?.value||"";
+  const addr=document.getElementById("set-addr")?.value||"";
+  const phone=document.getElementById("set-phone")?.value||"";
+  STATE.spas=STATE.spas.map(s=>s.id===spaId?{...s,name,address:addr,phone}:s);
+  const msg=document.getElementById("set-msg");
+  if(msg){msg.innerHTML=`<div style="color:${OK};font-weight:700;margin-bottom:8px;font-size:13px">✅ Đã lưu thành công!</div>`;
+    setTimeout(()=>{if(msg)msg.innerHTML="";},2500);}
+}
+window.saveSpaSettings=saveSpaSettings;
+
+// ══════════════════════════════════════════════════════════════
+// ROUTER + RENDER
+// ══════════════════════════════════════════════════════════════
+function getPageHtml(){
+  const{page}=STATE;
+  if(page==="platform_dash")return pagePlatformDash();
+  if(page==="manage_spas")  return pageManageSpas();
+  if(page==="manage_users") return pageManageUsers();
+  if(page==="subscriptions")return pageSubscriptions();
+  if(page==="spa_dash")     return pageSpaDash();
+  if(page==="pos")          return pagePOS();
+  if(page==="customers")    return pageCustomers();
+  if(page==="services")     return pageServices();
+  if(page==="products")     return pageProducts();
+  if(page==="invoices")     return pageInvoices();
+  if(page==="debts")        return pageDebts();
+  if(page==="staff")        return pageStaff();
+  if(page==="spa_settings") return pageSpaSettings();
+  return pageSpaDash();
+}
+
+function renderApp(){
+  const appEl=document.getElementById("app");
+  if(!appEl)return;
+  if(!STATE.user){
+    appEl.outerHTML=renderLogin();
+    // Re-bind since outerHTML replaces the element
+    const app2=document.createElement("div");
+    app2.id="app";
+    document.body.appendChild(app2);
+    document.getElementById("app").outerHTML=renderLogin();
+    return;
+  }
+  const pageHtml=getPageHtml();
+  document.getElementById("app").outerHTML=`<div id="app">${renderShell(pageHtml)}</div>`;
+  // Post-render hooks
+  if(STATE.page==="spa_dash"){
+    requestAnimationFrame(()=>setTimeout(initDashCharts,50));
+  }
+  if(STATE.page==="pos"){
+    requestAnimationFrame(()=>{
+      posRenderItems();
+      posRenderSummary();
+      document.getElementById("pos-paid")?.addEventListener("input",e=>{POS.paid=e.target.value;posRenderSummary();});
+      document.getElementById("pos-disc")?.addEventListener("input",e=>{POS.disc=Number(e.target.value)||0;posRenderSummary();});
+      document.getElementById("pos-cust")?.addEventListener("change",e=>{POS.custId=e.target.value;});
+    });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+(function init(){
+  const appEl=document.getElementById("app");
+  appEl.innerHTML=renderLogin();
+  // bind login listeners - handled by inline onclick
+})();
+</script>
+</body>
+</html>
